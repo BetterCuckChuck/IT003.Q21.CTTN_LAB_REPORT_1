@@ -35,10 +35,23 @@ def merge(left, right):
     return result
 
 def heap_sort(arr):
-    h = []
-    for value in arr:
-        heapq.heappush(h, value)
-    return [heapq.heappop(h) for _ in range(len(h))]
+    arr_copy = list(arr)
+    n = len(arr_copy)
+    for i in range(n // 2 - 1, -1, -1):
+        heapify(arr_copy, n, i)
+    for i in range(n - 1, 0, -1):
+        arr_copy[i], arr_copy[0] = arr_copy[0], arr_copy[i]
+        heapify(arr_copy, i, 0)
+    return arr_copy
+
+def heapify(arr, n, i):
+    largest = i
+    left, right = 2 * i + 1, 2 * i + 2
+    if left < n and arr[left] > arr[largest]: largest = left
+    if right < n and arr[right] > arr[largest]: largest = right
+    if largest != i:
+        arr[i], arr[largest] = arr[largest], arr[i]
+        heapify(arr, n, largest)
 
 def numpy_sort(arr):
     # Chuyển về numpy array và sort (QuickSort tối ưu C)
@@ -69,34 +82,30 @@ def run_benchmark():
         "6. Rand Float A", "7. Rand Float B", "8. Rand Float C", "9. Rand Float D", "10. Rand Float E"
     ]
 
+    totals = [0, 0, 0, 0]
+    num_cases = len(data_arrays)
+
     for idx, arr_original in enumerate(data_arrays):
-        times = []
+        current_times = []
+        test_functions = [quick_sort, merge_sort, heap_sort, numpy_sort]
+
+        for i, func in enumerate(test_functions):
+            start = time.perf_counter()
+            func(arr_original)
+            duration_ms = round((time.perf_counter() - start) * 1000)
+            current_times.append(duration_ms)
+            totals[i] += duration_ms
         
-        # Test QuickSort
-        arr = arr_original.copy()
-        start = time.time()
-        quick_sort(arr)
-        times.append(time.time() - start)
-        
-        # Test MergeSort
-        arr = arr_original.copy()
-        start = time.time()
-        merge_sort(arr)
-        times.append(time.time() - start)
-        
-        # Test HeapSort
-        arr = arr_original.copy()
-        start = time.time()
-        heap_sort(arr)
-        times.append(time.time() - start)
-        
-        # Test Numpy Sort
-        arr = arr_original.copy()
-        start = time.time()
-        numpy_sort(arr)
-        times.append(time.time() - start)
-        
-        print(f"{labels[idx]:<20} | {times[0]:<10.6f} | {times[1]:<10.6f} | {times[2]:<10.6f} | {times[3]:<10.6f}")
+        print(f"{labels[idx]:<20} | {current_times[0]:<10} | {current_times[1]:<10} | {current_times[2]:<10} | {current_times[3]:<10}")
+
+    # Calculate and print Average row
+    print("-" * 75)
+    avg_quick = round(totals[0] / num_cases)
+    avg_merge = round(totals[1] / num_cases)
+    avg_heap  = round(totals[2] / num_cases)
+    avg_numpy = round(totals[3] / num_cases)
+    
+    print(f"{'AVERAGE':<20} | {avg_quick:<10} | {avg_merge:<10} | {avg_heap:<10} | {avg_numpy:<10}")
 
 if __name__ == "__main__":
     run_benchmark()
